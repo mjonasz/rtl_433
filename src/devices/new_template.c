@@ -22,11 +22,11 @@
  * Messages start with 0xAA
  *
  */
-#define MYDEVICE_BITLEN		68
-#define MYDEVICE_STARTBYTE	0xAA
-#define MYDEVICE_MSG_TYPE	0x10
-#define MYDEVICE_CRC_POLY	0x80
-#define MYDEVICE_CRC_INIT	0x00
+#define BITLEN		104
+#define STARTBYTE	0xAA
+#define MSG_TYPE	0x10
+#define CRC_POLY	0x80
+#define CRC_INIT	0x00
 
 
 static int template_callback(bitbuffer_t *bitbuffer) {
@@ -38,7 +38,7 @@ static int template_callback(bitbuffer_t *bitbuffer) {
     int16_t value;
     data_t *data;
     int valid = 0;
-
+//#fprintf(stderr, "DUPA");
 
     /*
      * Early debugging aid to see demodulated bits in buffer and
@@ -48,10 +48,10 @@ static int template_callback(bitbuffer_t *bitbuffer) {
      * 1. Enable with -D -D (debug level of 2)
      * 2. Delete this block when your decoder is working
      */
-    //    if (debug_output > 1) {
-    //        fprintf(stderr,"new_tmplate callback:\n");
-    //        bitbuffer_print(bitbuffer);
-    //    }
+        if (debug_output > 1) {
+            fprintf(stderr,"new_tmplate callback:\n");
+            bitbuffer_print(bitbuffer);
+        }
 
     local_time_str(0, time_str);
 
@@ -77,8 +77,8 @@ static int template_callback(bitbuffer_t *bitbuffer) {
 	 * - Data integrity checks (CRC/Checksum/Parity)
 	 */
 
-	if (bitbuffer->bits_per_row[brow] != 68)
-	    continue;
+//if (bitbuffer->bits_per_row[brow] != BITNUM)
+	//    continue;
 
 	/*
 	 * number of bytes in row.
@@ -94,25 +94,25 @@ static int template_callback(bitbuffer_t *bitbuffer) {
 	 * Reject rows that don't start with the correct start byte
 	 * Example message should start with 0xAA
 	 */
-	if (bb[0] != MYDEVICE_STARTBYTE)
-	    continue;
+//if (bb[0] != STARTBYTE)
+//	    continue;
 
 	/*
 	 * Check message integrity (CRC/Checksum/parity)
 	 *
 	 * Example device uses CRC-8
 	 */
-	r_crc = bb[row_nbytes - 1];
-	c_crc = crc8(bb, row_nbytes - 1, MYDEVICE_CRC_POLY, MYDEVICE_CRC_INIT);
-	if (r_crc != c_crc) {
+	//r_crc = bb[row_nbytes - 1];
+	//c_crc = crc8(bb, row_nbytes - 1, MYDEVICE_CRC_POLY, MYDEVICE_CRC_INIT);
+	//if (r_crc != c_crc) {
 	    // example debugging output
-	    if (debug_output >= 1)
-		fprintf(stderr, "%s new_tamplate bad CRC: calculated %02x, received %02x\n",
-			time_str, c_crc, r_crc);
+	//    if (debug_output >= 1)
+	//	fprintf(stderr, "%s new_tamplate bad CRC: calculated %02x, received %02x\n",
+	//		time_str, c_crc, r_crc);
 
-	    // reject row
-	    continue;
-	}
+	//    // reject row
+	//    continue;
+	//}
 
 	/*
 	 * Now that message "envelope" has been validated,
@@ -123,14 +123,14 @@ static int template_callback(bitbuffer_t *bitbuffer) {
 	sensor_id = bb[2] << 8 | bb[3];
 	value = bb[4] << 8 | bb[5];
 
-	if (msg_type != MYDEVICE_MSG_TYPE) {
+	//if (msg_type != MYDEVICE_MSG_TYPE) {
 	    /*
 	     * received an unexpected message type
 	     * could be a bad message or a new message not
 	     * previously seen.  Optionally log debug putput.
 	     */
-	    continue;
-	}
+	  //  continue;
+	//}
 
 	data = data_make("time", "", DATA_STRING, time_str,
 			 "model", "", DATA_STRING, "New Template",
@@ -191,10 +191,10 @@ static char *csv_output_fields[] = {
 
 r_device template = {
 	.name		= "Template decoder",
-	.modulation	= OOK_PULSE_PPM_RAW,
-	.short_limit	= ((56+33)/2)*4,
-	.long_limit     = (56+33)*4,
-	.reset_limit    = (56+33)*2*4,
+	.modulation	= OOK_PULSE_MANCHESTER_ZEROBIT,
+	.short_limit	= 58,
+	.long_limit     = 0,
+	.reset_limit    = 128,
 	.json_callback	= &template_callback,
 	.disabled	= 1,
 	.demod_arg	= 0,
